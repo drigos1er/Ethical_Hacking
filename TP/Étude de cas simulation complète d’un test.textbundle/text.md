@@ -26,19 +26,19 @@ Dans ce scénario, la post-exploitation reste volontairement limitée. Le testeu
 Toutes les requêtes ont été envoyées via un proxy dédié, les enregistrements DNS n’ont pas été modifiés, et aucun fichier n’a été écrit sur les serveurs. Le pentester vérifie néanmoins que l’adresse IP utilisée ne reste pas active, qu’aucun cookie de session persistante n’a été créé, et que les journaux de son côté ne contiennent pas de données sensibles. Il chiffre les preuves collectées et détruit les fichiers temporaires.
 
 ## Extrait de rapport final - Mission RH Consulting (simulation)
-Titre du document : rapport de test d’intrusion externe - Portail RH Consulting
+**Titre du document** : rapport de test d’intrusion externe - Portail RH Consulting
 
-Client : RH Consulting
+**Client** : RH Consulting
 
-Date du test : du 6 au 10 mai 2025
+**Date du test** : du 6 au 10 mai 2026
 
-Type de test : boîte noire, externe, non destructif
+**Type de test** : boîte noire, externe, non destructif
 
-Prestataire : SecureTest Partners
+**Prestataire**: SecureTest Partners
 
-Auteur : Kenan B. - Pentester certifié CEH
+**Auteur :** Koffi Paul. - Pentester certifié CEH
 
-1. Résumé exécutif
+### Résumé exécutif
 
 L’objectif de ce test d’intrusion était d’évaluer la résistance du portail web externe de RH Consulting à une attaque réaliste simulée par un acteur malveillant n’ayant aucun accès initial. La mission s’est déroulée sur cinq jours, dans les conditions prévues contractuellement (test en boîte noire, sans perturbation de la production).
 
@@ -54,61 +54,58 @@ une configuration incorrecte d’un bucket S3, exposant de nombreux fichiers sen
 
 Ces failles présentent un risque juridique, réglementaire (RGPD), et réputationnel majeur. Une série de recommandations détaillées a été formulée afin de corriger ces vulnérabilités et renforcer la posture de sécurité globale.
 
-2. Vulnérabilité critique n°1 - IDOR sur l’API /user/profile
+### Vulnérabilité critique n°1 - IDOR sur l’API /user/profile
 
-Description
+**Description**
 
 L’endpoint GET /api/v1/user/profile?id=XXX permet de consulter le profil utilisateur en modifiant simplement l’ID en paramètre. Aucune authentification n’est exigée, et aucun contrôle d’accès côté serveur n’est mis en place.
 
-Impact
+**Impact**
 
 Un attaquant peut itérer les identifiants et récupérer massivement des données personnelles (nom, prénom, e-mail, documents associés), ce qui constitue une violation directe du RGPD.
 
-Preuve
+**Preuve**
 
 Une requête GET sur l’ID 142 a retourné les informations d’un autre utilisateur que celui initialement connecté. Les captures d’écran et les réponses brutes sont jointes en annexe.
 
-Recommandation
-
+**Recommandation**
 Implémenter une logique d’authentification systématique via jeton JWT ou session sécurisée, et vérifier côté serveur que l’utilisateur authentifié a le droit de consulter l’ID demandé.
 
-3. Vulnérabilité critique n°2 - Bucket S3 accessible publiquement
+### Vulnérabilité critique n°2 - Bucket S3 accessible publiquement
 
-Description
+**Description**
 
 Un bucket Amazon S3 nommé rh-prod-client-docs est accessible en lecture sans authentification via des URL publiques. Ces documents sont exposés sans chiffrement ni expiration.
 
-Impact
+**Impact**
 
 Plus de 10 000 fichiers PDF contenant des documents RH confidentiels (contrats, fiches de paie, relevés d’heures) sont accessibles à toute personne connaissant l’URL.
 
-Preuve
+**Preuve**
 
 Une liste d’URL obtenue via l’API permet d’accéder librement à ces fichiers, sans authentification. Une seule preuve est incluse dans ce rapport à titre démonstratif.
 
-Recommandation
+**Recommandation**
 
 Désactiver l’accès public au bucket via la console AWS, appliquer une stratégie IAM restrictive, et activer les logs d’accès pour identifier les consultations non autorisées passées.
 
-4. Vulnérabilité moyenne n°1 - Endpoint de debug Node.js exposé
+### Vulnérabilité moyenne n°1 - Endpoint de debug Node.js exposé
 
-Description
+**Description**
 
 Le port 3000 sur le sous-domaine dev.rh-consulting.fr expose une interface de debug Node.js, en environnement de préproduction, sans contrôle d’accès.
 
-Impact
+**Impact**
 
 Un attaquant peut provoquer des erreurs serveur retournant des informations internes : versions, dépendances, chemins systèmes, et identifiants en clair dans certains cas.
 
-Preuve
+**Preuve**
 
 Une requête POST malformée sur /admin/test-login retourne une stacktrace complète exposant le nom du fichier de configuration.
 
-Recommandation
+**Recommandation**
 
 Interdire l’accès public aux environnements de développement et désactiver toute trace de debug ou de logging verbeux en production.
-
-1. Résumé des vulnérabilités 
 
 
 ## Recommandations générales
@@ -123,12 +120,4 @@ Réviser les permissions AWS S3 à l’aide d’outils comme AWS Config ou Scout
 
 Planifier des revues de code régulières pour détecter les comportements d’accès directs non contrôlés.
 
-## Annexes
-
-Captures d’écran des réponses API IDOR (anonymisées).
-
-Requêtes HTTP précises utilisées (fichiers .txt fournis séparément).
-
-Extrait des métadonnées PDF contenant des informations internes.
-
-Journal d’actions techniques horodatées (Netcat, Burp Suite, Nmap).
+##  NB: Des doocments peuvent être ajoutés  en annexe
